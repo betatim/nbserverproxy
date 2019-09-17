@@ -196,12 +196,6 @@ class ProxyHandler(WebSocketHandlerMixin, IPythonHandler):
         client = httpclient.AsyncHTTPClient()
 
         req = self._build_proxy_request(host, port, proxied_path, body)
-        print("Incoming headers:")
-        print(self.request.headers)
-        print("Headers:")
-        print(req.headers)
-        print("Body:")
-        print(req.body)
         response = await client.fetch(req, raise_error=False)
         # record activity at start and end of requests
         self._record_activity()
@@ -283,7 +277,11 @@ class ProxyHandler(WebSocketHandlerMixin, IPythonHandler):
     def proxy_request_headers(self):
         '''A dictionary of headers to be used when constructing
         a tornado.httpclient.HTTPRequest instance for the proxy request.'''
-        return self.request.headers.copy()
+        headers = self.request.headers.copy()
+        headers.add("X-Real-IP", self.request.remote_ip)
+        headers.add("X-Forwarded-For", self.request.remote_ip)
+        headers.add("X-Forwarded-Proto", self.request.protocol)
+        return headers
 
     def proxy_request_options(self):
         '''A dictionary of options to be used when constructing
